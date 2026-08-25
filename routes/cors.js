@@ -81,6 +81,13 @@ const corsResponseDebugLogger = (req, res, next) => {
     }
 
     const requestOrigin = req.header('Origin');
+    const decision = evaluateOrigin(requestOrigin);
+
+    // Non-CORS debug headers help diagnose proxies that strip Access-Control-* headers.
+    res.setHeader('X-Cors-Debug-Allowed', decision.allowed ? 'true' : 'false');
+    res.setHeader('X-Cors-Debug-Reason', decision.reason);
+    res.setHeader('X-Cors-Debug-Origin', decision.normalizedOrigin || 'none');
+
     if (!requestOrigin) {
         next();
         return;
