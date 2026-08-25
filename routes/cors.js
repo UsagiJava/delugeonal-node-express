@@ -1,13 +1,29 @@
 const cors = require('cors');
 
-const whitelist = ['http://localhost:3000', 'https://localhost:3443'];
+const defaultWhitelist = [
+    'http://localhost:3000',
+    'https://localhost:3443',
+    'https://delugeonal.com',
+    'https://www.delugeonal.com'
+];
+
+const envWhitelist = (process.env.CORS_WHITELIST || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const whitelist = [...new Set([...defaultWhitelist, ...envWhitelist])];
+
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
-    if(whitelist.indexOf(req.header('Origin')) !== -1) {
+    const requestOrigin = req.header('Origin');
+
+    if (!requestOrigin || whitelist.includes(requestOrigin)) {
         corsOptions = { origin: true };
     } else {
         corsOptions = { origin: false };
     }
+
     callback(null, corsOptions);
 };
 
