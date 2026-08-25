@@ -14,11 +14,37 @@ const envWhitelist = (process.env.CORS_WHITELIST || '')
 
 const whitelist = [...new Set([...defaultWhitelist, ...envWhitelist])];
 
+const normalizeOrigin = (origin) => {
+    if (!origin) {
+        return origin;
+    }
+
+    return origin.endsWith('/') ? origin.slice(0, -1) : origin;
+};
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) {
+        return true;
+    }
+
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (whitelist.includes(normalizedOrigin)) {
+        return true;
+    }
+
+    try {
+        const hostname = new URL(normalizedOrigin).hostname;
+        return hostname === 'delugeonal.com' || hostname.endsWith('.delugeonal.com');
+    } catch (error) {
+        return false;
+    }
+};
+
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
     const requestOrigin = req.header('Origin');
 
-    if (!requestOrigin || whitelist.includes(requestOrigin)) {
+    if (isAllowedOrigin(requestOrigin)) {
         corsOptions = { origin: true };
     } else {
         corsOptions = { origin: false };
