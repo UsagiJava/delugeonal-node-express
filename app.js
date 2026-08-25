@@ -1,11 +1,15 @@
 const express = require('express');
 const path = require('path');
 require('dotenv').config();
+const cors = require('./routes/cors');
 
 const app = express();
 
 // Middleware to automatically parse incoming JSON payloads
 app.use(express.json());
+app.use(cors.corsResponseDebugLogger);
+app.use(cors.corsWithOptions);
+app.options(/.*/, cors.corsWithOptions);
 
 const clubbageAnimationRouter = require('./routes/clubbage/animationRouter');
 app.use('/clubbage/animation', clubbageAnimationRouter);
@@ -18,6 +22,24 @@ app.use('/clubbage/player', clubbagePlayerRouter);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.use((err, req, res, next) => {
+    console.error('[api:error]', {
+        method: req.method,
+        path: req.originalUrl || req.url,
+        message: err.message
+    });
+
+    if (res.headersSent) {
+        next(err);
+        return;
+    }
+
+    res.status(err.status || 500).json({
+        error: 'Internal Server Error',
+        message: err.message
+    });
 });
 
 // 404 Catch-all middleware

@@ -74,6 +74,36 @@ const logCorsDecision = (req, origin, decision) => {
     console.log(message);
 };
 
+const corsResponseDebugLogger = (req, res, next) => {
+    if (!corsDebugEnabled) {
+        next();
+        return;
+    }
+
+    const requestOrigin = req.header('Origin');
+    if (!requestOrigin) {
+        next();
+        return;
+    }
+
+    res.on('finish', () => {
+        const message = [
+            '[cors:response]',
+            `status=${res.statusCode}`,
+            `method=${req.method}`,
+            `path=${req.originalUrl || req.url}`,
+            `origin=${requestOrigin}`,
+            `acaOrigin=${res.getHeader('Access-Control-Allow-Origin') || 'none'}`,
+            `vary=${res.getHeader('Vary') || 'none'}`,
+            `ip=${getClientIp(req)}`
+        ].join(' ');
+
+        console.log(message);
+    });
+
+    next();
+};
+
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
     const requestOrigin = req.header('Origin');
@@ -92,3 +122,4 @@ const corsOptionsDelegate = (req, callback) => {
 
 exports.cors = cors();
 exports.corsWithOptions = cors(corsOptionsDelegate);
+exports.corsResponseDebugLogger = corsResponseDebugLogger;
