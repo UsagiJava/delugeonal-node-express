@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('./cors');
+const cors = require('../cors');
 const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
@@ -11,9 +11,9 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-const clubbageCircuitRouter = express.Router();
+const circuitRouter = express.Router();
 
-clubbageCircuitRouter.route('/')
+circuitRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
     .get(cors.corsWithOptions, async (req, res) => {
         try {
@@ -36,7 +36,7 @@ clubbageCircuitRouter.route('/')
         res.end('DELETE operation not supported on /clubbageCircuit');
     });
 
-clubbageCircuitRouter.route('/:circuitId')
+circuitRouter.route('/:circuitId')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
     .get(cors.corsWithOptions, async (req, res) => {
         try {
@@ -59,4 +59,4 @@ clubbageCircuitRouter.route('/:circuitId')
         res.end(`DELETE operation not supported on /clubbageCircuit/${req.params.circuitId}`);
     });
 
-module.exports = clubbageCircuitRouter;
+module.exports = circuitRouter;

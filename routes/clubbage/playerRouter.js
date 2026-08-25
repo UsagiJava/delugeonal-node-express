@@ -1,5 +1,5 @@
 const express = require('express');
-const cors = require('./cors');
+const cors = require('../cors');
 const mysql = require('mysql2/promise');
 const pool = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
@@ -11,9 +11,9 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
-const clubbagePlayerRouter = express.Router();
+const playerRouter = express.Router();
 
-clubbagePlayerRouter.route('/')
+playerRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
     .get(cors.corsWithOptions, async (req, res) => {
         try {
@@ -36,7 +36,7 @@ clubbagePlayerRouter.route('/')
         res.end('DELETE operation not supported on /clubbagePlayer');
     });
 
-clubbagePlayerRouter.route('/:playerId')
+playerRouter.route('/:playerId')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
     .get(cors.corsWithOptions, async (req, res) => {
         try {
@@ -59,4 +59,4 @@ clubbagePlayerRouter.route('/:playerId')
         res.end(`DELETE operation not supported on /clubbagePlayer/${req.params.playerId}`);
     });
 
-module.exports = clubbagePlayerRouter;
+module.exports = playerRouter;

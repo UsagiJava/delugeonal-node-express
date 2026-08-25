@@ -7,14 +7,14 @@ const app = express();
 // Middleware to automatically parse incoming JSON payloads
 app.use(express.json());
 
-const clubbageAnimationRouter = require('./routes/clubbageAnimationRouter');
-app.use('/api/clubbageAnimation', clubbageAnimationRouter);
+const clubbageAnimationRouter = require('./routes/clubbage/animationRouter');
+app.use('/clubbage/animation', clubbageAnimationRouter);
 
-const clubbageCircuitRouter = require('./routes/clubbageCircuitRouter');
-app.use('/api/clubbageCircuit', clubbageCircuitRouter);
+const clubbageCircuitRouter = require('./routes/clubbage/circuitRouter');
+app.use('/clubbage/circuit', clubbageCircuitRouter);
 
-const clubbagePlayerRouter = require('./routes/clubbagePlayerRouter');
-app.use('/api/clubbagePlayer', clubbagePlayerRouter);
+const clubbagePlayerRouter = require('./routes/clubbage/playerRouter');
+app.use('/clubbage/player', clubbagePlayerRouter);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
