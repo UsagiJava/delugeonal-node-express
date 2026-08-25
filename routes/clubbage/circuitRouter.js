@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('../cors');
 const mysql = require('mysql2/promise');
-const pool = mysql.createPool({
+const connection = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || '3306'),
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
@@ -15,12 +16,16 @@ const circuitRouter = express.Router();
 
 circuitRouter.route('/')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
-    .get(cors.corsWithOptions, async (req, res) => {
+    .get(cors.corsWithOptions, async (req, res, next) => {
         try {
-            const [rows] = await pool.query('SELECT id, name, email FROM circuits');
-            res.status(200).json({ success: true, data: rows });
+            const [rows] = await connection.query(
+                "SELECT circuit_key, payload FROM circuits ORDER BY CAST(circuit_key AS UNSIGNED), id ASC"
+            );
+
+            const response = rows.map((row) => row.payload);
+            res.json(response);
         } catch (error) {
-            res.status(500).json({ success: false, error: 'GET operation failed to retrieve circuit data.' });
+            next(error);
         }
     })
     .post(cors.corsWithOptions, (req, res) => {
@@ -36,27 +41,39 @@ circuitRouter.route('/')
         res.end('DELETE operation not supported on /clubbageCircuit');
     });
 
-circuitRouter.route('/:circuitId')
+circuitRouter.route('/:circuitKey')
     .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
-    .get(cors.corsWithOptions, async (req, res) => {
+    .get(cors.corsWithOptions, async (req, res, next) => {
         try {
-            const [rows] = await pool.query('SELECT id, name, email FROM circuits WHERE id = ?', [req.params.circuitId]);
-            res.status(200).json({ success: true, data: rows });
+            const { circuitKey } = req.params;
+            const [rows] = await connection.query(
+                "SELECT circuit_key, payload FROM circuits WHERE circuit_key = ? LIMIT 1",
+                [circuitKey]
+            );
+
+            if (!rows.length) {
+                res.status(404).json({
+                    error: `Circuit '${circuitKey}' was not found.`
+                });
+                return;
+            }
+
+            res.json(rows[0].payload);
         } catch (error) {
-            res.status(500).json({ success: false, error: 'GET operation failed to retrieve circuit data.' });
+            next(error);
         }
     })
     .post(cors.corsWithOptions, (req, res) => {
         res.statusCode = 403;
-        res.end(`POST operation not supported on /clubbageCircuit/${req.params.circuitId}`);
+        res.end(`POST operation not supported on /clubbageCircuit/${req.params.circuitKey}`);
     })
     .put(cors.corsWithOptions, (req, res) => {
         res.statusCode = 403;
-        res.end(`PUT operation not supported on /clubbageCircuit/${req.params.circuitId}`);
+        res.end(`PUT operation not supported on /clubbageCircuit/${req.params.circuitKey}`);
     })
     .delete(cors.corsWithOptions, (req, res) => {
         res.statusCode = 403;
-        res.end(`DELETE operation not supported on /clubbageCircuit/${req.params.circuitId}`);
+        res.end(`DELETE operation not supported on /clubbageCircuit/${req.params.circuitKey}`);
     });
 
 module.exports = circuitRouter;
