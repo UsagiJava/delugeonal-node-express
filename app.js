@@ -1,18 +1,18 @@
-import express from 'express';
-import 'dotenv/config';
+const express = require('express');
+require('dotenv').config();
 
 const app = express();
 
 // Middleware to automatically parse incoming JSON payloads
 app.use(express.json());
 
-const clubbageAnimationRouter = require('./routes/clubbageAnimation');
+const clubbageAnimationRouter = require('./routes/clubbageAnimationRouter');
 app.use('/api/clubbageAnimation', clubbageAnimationRouter);
 
-const clubbageCircuitRouter = require('./routes/clubbageCircuit');
+const clubbageCircuitRouter = require('./routes/clubbageCircuitRouter');
 app.use('/api/clubbageCircuit', clubbageCircuitRouter);
 
-const clubbagePlayerRouter = require('./routes/clubbagePlayer');
+const clubbagePlayerRouter = require('./routes/clubbagePlayerRouter');
 app.use('/api/clubbagePlayer', clubbagePlayerRouter);
 
 // 404 Catch-all middleware
@@ -38,8 +38,4 @@ app.use((req, res, next) => {
 </html>`);
 });
 
-// Dynamically bind to the port assigned
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    //console.log(`Server running on port ${PORT}`);
-});
+module.exports = app;
