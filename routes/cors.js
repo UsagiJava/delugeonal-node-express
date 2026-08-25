@@ -13,6 +13,7 @@ const envWhitelist = (process.env.CORS_WHITELIST || '')
     .filter(Boolean);
 
 const whitelist = [...new Set([...defaultWhitelist, ...envWhitelist])];
+const corsDebugEnabled = process.env.CORS_DEBUG !== 'false';
 
 const normalizeOrigin = (origin) => {
     if (!origin) {
@@ -22,33 +23,69 @@ const normalizeOrigin = (origin) => {
     return origin.endsWith('/') ? origin.slice(0, -1) : origin;
 };
 
-const isAllowedOrigin = (origin) => {
+const evaluateOrigin = (origin) => {
     if (!origin) {
-        return true;
+        return { allowed: true, reason: 'no-origin-header', normalizedOrigin: origin };
     }
 
     const normalizedOrigin = normalizeOrigin(origin);
     if (whitelist.includes(normalizedOrigin)) {
-        return true;
+        return { allowed: true, reason: 'whitelist-match', normalizedOrigin };
     }
 
     try {
         const hostname = new URL(normalizedOrigin).hostname;
-        return hostname === 'delugeonal.com' || hostname.endsWith('.delugeonal.com');
+        if (hostname === 'delugeonal.com' || hostname.endsWith('.delugeonal.com')) {
+            return { allowed: true, reason: 'domain-match', normalizedOrigin };
+        }
+
+        return { allowed: false, reason: 'domain-not-allowed', normalizedOrigin };
     } catch (error) {
-        return false;
+        return { allowed: false, reason: 'invalid-origin-header', normalizedOrigin };
     }
+};
+
+const getClientIp = (req) => {
+    const forwarded = req.header('x-forwarded-for');
+    if (forwarded) {
+        return forwarded.split(',')[0].trim();
+    }
+
+    return req.ip || req.socket?.remoteAddress || 'unknown';
+};
+
+const logCorsDecision = (req, origin, decision) => {
+    if (!corsDebugEnabled) {
+        return;
+    }
+
+    const message = [
+        '[cors]',
+        decision.allowed ? 'ALLOW' : 'BLOCK',
+        `method=${req.method}`,
+        `path=${req.originalUrl || req.url}`,
+        `origin=${origin || 'none'}`,
+        `normalizedOrigin=${decision.normalizedOrigin || 'none'}`,
+        `reason=${decision.reason}`,
+        `ip=${getClientIp(req)}`,
+        `host=${req.header('host') || 'unknown'}`
+    ].join(' ');
+
+    console.log(message);
 };
 
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
     const requestOrigin = req.header('Origin');
+    const decision = evaluateOrigin(requestOrigin);
 
-    if (isAllowedOrigin(requestOrigin)) {
+    if (decision.allowed) {
         corsOptions = { origin: true };
     } else {
         corsOptions = { origin: false };
     }
+
+    logCorsDecision(req, requestOrigin, decision);
 
     callback(null, corsOptions);
 };
