@@ -87,6 +87,10 @@ const corsResponseDebugLogger = (req, res, next) => {
     res.setHeader('X-Cors-Debug-Allowed', decision.allowed ? 'true' : 'false');
     res.setHeader('X-Cors-Debug-Reason', decision.reason);
     res.setHeader('X-Cors-Debug-Origin', decision.normalizedOrigin || 'none');
+    res.setHeader(
+        'X-Cors-Debug-Acao-Expected',
+        decision.allowed && decision.normalizedOrigin ? decision.normalizedOrigin : 'none'
+    );
 
     if (!requestOrigin) {
         next();
@@ -111,6 +115,21 @@ const corsResponseDebugLogger = (req, res, next) => {
     next();
 };
 
+const corsActualHeaderDebugLogger = (req, res, next) => {
+    if (!corsDebugEnabled) {
+        next();
+        return;
+    }
+
+    // Snapshot current ACAO after corsWithOptions has executed.
+    res.setHeader(
+        'X-Cors-Debug-Acao-Actual',
+        String(res.getHeader('Access-Control-Allow-Origin') || 'none')
+    );
+
+    next();
+};
+
 const corsOptionsDelegate = (req, callback) => {
     let corsOptions;
     const requestOrigin = req.header('Origin');
@@ -130,3 +149,4 @@ const corsOptionsDelegate = (req, callback) => {
 exports.cors = cors();
 exports.corsWithOptions = cors(corsOptionsDelegate);
 exports.corsResponseDebugLogger = corsResponseDebugLogger;
+exports.corsActualHeaderDebugLogger = corsActualHeaderDebugLogger;

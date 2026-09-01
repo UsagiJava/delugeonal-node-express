@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 app.use(cors.corsResponseDebugLogger);
 app.use(cors.corsWithOptions);
+app.use(cors.corsActualHeaderDebugLogger);
 app.options(/.*/, cors.corsWithOptions);
 
 const clubbageAnimationRouter = require('./routes/clubbage/animationRouter');
